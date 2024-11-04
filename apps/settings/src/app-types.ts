@@ -87,8 +87,38 @@ export interface IExAppStatus {
 	type: string
 }
 
+export interface IDeployOptions {
+	environment_variables: IDeployEnv[]
+	mounts: IDeployMount[]
+	ports: IDeployPort[]
+}
+
+export interface IDeployEnv {
+	envName: string
+	displayName: string
+	description: string
+	default?: string
+}
+
+export interface IDeployMount {
+	hostPath: string
+	containerPath: string
+	readOnly: boolean
+}
+
+export interface IDeployPort {
+	hostPort: string // 443, 80, 443/tcp, 80/udp, etc.
+	hostIp: string // 0.0.0.0, 127.0.0.1, localhost, etc.
+	containerPort: number
+}
+
+export interface IAppstoreExAppRelease extends IAppstoreAppRelease {
+	environmentVariables?: IDeployEnv[]
+}
+
 export interface IAppstoreExApp extends IAppstoreApp {
 	daemon: IDeployDaemon | null | undefined
 	status: IExAppStatus | Record<string, never>
 	error: string
+	releases: IAppstoreExAppRelease[]
 }
