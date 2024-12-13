@@ -17,3 +17,5 @@ script('settings', [
 <?php if ($_['profileEnabledGlobally']) : ?>
 	<div id="vue-admin-profile-settings"></div>
 <?php endif; ?>
+
+<div id="vue-admin-system-tags-settings"></div>

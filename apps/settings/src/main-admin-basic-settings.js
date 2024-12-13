@@ -12,6 +12,7 @@ import logger from './logger.ts'
 
 import ProfileSettings from './components/BasicSettings/ProfileSettings.vue'
 import BackgroundJob from './components/BasicSettings/BackgroundJob.vue'
+import SystemTagsSettings from './components/BasicSettings/SystemTagsSettings.vue'
 
 __webpack_nonce__ = getCSPNonce()
 
@@ -33,3 +34,8 @@ if (profileEnabledGlobally) {
 	const ProfileSettingsView = Vue.extend(ProfileSettings)
 	new ProfileSettingsView().$mount('#vue-admin-profile-settings')
 }
+
+const SystemTagsSettingsView = Vue.extend(SystemTagsSettings)
+new SystemTagsSettingsView().$mount('#vue-admin-system-tags-settings')
+
+console.log('Main admin basic settings loaded')
