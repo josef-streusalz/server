@@ -1906,6 +1906,10 @@ class Manager implements IManager {
 		return $this->config->getAppValue('core', 'shareapi_restrict_user_enumeration_full_match_ignore_second_dn', 'no') === 'yes';
 	}
 
+	public function allowCustomTokens(): bool {
+		return $this->config->getAppValue('core', 'shareapi_allow_custom_tokens', 'no') === 'yes';
+	}
+
 	public function currentUserCanEnumerateTargetUser(?IUser $currentUser, IUser $targetUser): bool {
 		if ($this->allowEnumerationFullMatch()) {
 			return true;
