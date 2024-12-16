@@ -712,7 +712,7 @@ class UserConfig implements IUserConfig {
 		ValueType $type,
 	): string {
 		$this->assertParams($userId, $app, $key);
-		if (!$this->matchAndApplyLexiconDefinition($app, $key, $lazy, $type, default: $default)) {
+		if (!$this->matchAndApplyLexiconDefinition($userId, $app, $key, $lazy, $type, default: $default)) {
 			return $default; // returns default if strictness of lexicon is set to WARNING (block and report)
 		}
 		$this->loadConfig($userId, $lazy);
@@ -1047,7 +1047,7 @@ class UserConfig implements IUserConfig {
 		ValueType $type,
 	): bool {
 		$this->assertParams($userId, $app, $key);
-		if (!$this->matchAndApplyLexiconDefinition($app, $key, $lazy, $type, $flags)) {
+		if (!$this->matchAndApplyLexiconDefinition($userId, $app, $key, $lazy, $type, $flags)) {
 			return false; // returns false as database is not updated
 		}
 		$this->loadConfig($userId, $lazy);
@@ -1823,6 +1823,7 @@ class UserConfig implements IUserConfig {
 	 * @throws TypeConflictException
 	 */
 	private function matchAndApplyLexiconDefinition(
+		string $userId,
 		string $app,
 		string $key,
 		bool &$lazy,
@@ -1844,16 +1845,44 @@ class UserConfig implements IUserConfig {
 		}
 
 		$lazy = $configValue->isLazy();
-		// default from Lexicon got priority but it can still be overwritten by admin
-		// with 'lexicon.default.userconfig' => [<app>.<key> => 'my value'], in config.php
-		$default = $this->config->getSystemValue('lexicon.default.userconfig', [])[$app . '.' . $key] ?? $configValue->getDefault() ?? $default;
 		$flags = $configValue->getFlags();
-
 		if ($configValue->isDeprecated()) {
 			$this->logger->notice('User config key ' . $app . '/' . $key . ' is set as deprecated.');
 		}
 
+		if ($this->hasKey($userId, $app, $key, $lazy)) {
+			return true; // if key exists there should be no need to extract default
+		}
+
+		// default from Lexicon got priority but it can still be overwritten by admin
+		$default = $this->getSystemDefault($app, $configValue) ?? $configValue->getDefault() ?? $default;
+
 		return true;
+	}
+
+	/**
+	 * get default value set in config/config.php if stored in key:
+	 *
+	 * 'lexicon.default.userconfig' => [
+	 *        <appId> => [
+	 *           <configKey> => 'my value',
+	 *        ]
+	 *     ],
+	 *
+	 * The entry is converted to string to fit the expected type when managing default value
+	 *
+	 * @param string $appId
+	 * @param ConfigLexiconEntry $configValue
+	 *
+	 * @return string|null
+	 */
+	private function getSystemDefault(string $appId, ConfigLexiconEntry $configValue): ?string {
+		$default = $this->config->getSystemValue('lexicon.default.userconfig', [])[$appId][$configValue->getKey()] ?? null;
+		if ($default === null) {
+			return null; // no system default, using default default.
+		}
+
+		return $configValue->convertToString($default);
 	}
 
 	/**

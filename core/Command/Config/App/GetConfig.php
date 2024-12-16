@@ -81,6 +81,7 @@ class GetConfig extends Base {
 			}
 
 			// get the default value defined from lexicon
+			/** @psalm-suppress UndefinedInterfaceMethod */
 			$configValue = $this->appConfig->getValueMixed($appName, $configName, $defaultValue ?? '');
 		}
 
