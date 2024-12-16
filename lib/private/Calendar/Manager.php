@@ -8,10 +8,12 @@ declare(strict_types=1);
  */
 namespace OC\Calendar;
 
+use DateTimeInterface;
 use OC\AppFramework\Bootstrap\Coordinator;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\Calendar\Exceptions\CalendarException;
 use OCP\Calendar\ICalendar;
+use OCP\Calendar\ICalendarEventBuilder;
 use OCP\Calendar\ICalendarIsShared;
 use OCP\Calendar\ICalendarIsWritable;
 use OCP\Calendar\ICalendarProvider;
@@ -216,21 +218,21 @@ class Manager implements IManager {
 		string $recipient,
 		string $calendarData,
 	): bool {
-		
+
 		$userCalendars = $this->getCalendarsForPrincipal($principalUri);
 		if (empty($userCalendars)) {
 			$this->logger->warning('iMip message could not be processed because user has no calendars');
 			return false;
 		}
-		
+
 		/** @var VCalendar $vObject|null */
 		$calendarObject = Reader::read($calendarData);
-		
+
 		if (!isset($calendarObject->METHOD) || $calendarObject->METHOD->getValue() !== 'REQUEST') {
 			$this->logger->warning('iMip message contains an incorrect or invalid method');
 			return false;
 		}
-		
+
 		if (!isset($calendarObject->VEVENT)) {
 			$this->logger->warning('iMip message contains no event');
 			return false;
@@ -242,12 +244,12 @@ class Manager implements IManager {
 			$this->logger->warning('iMip message event dose not contains a UID');
 			return false;
 		}
-		
+
 		if (!isset($eventObject->ATTENDEE)) {
 			$this->logger->warning('iMip message event dose not contains any attendees');
 			return false;
 		}
-		
+
 		foreach ($eventObject->ATTENDEE as $entry) {
 			$address = trim(str_replace('mailto:', '', $entry->getValue()));
 			if ($address === $recipient) {
@@ -259,17 +261,17 @@ class Manager implements IManager {
 			$this->logger->warning('iMip message event does not contain a attendee that matches the recipient');
 			return false;
 		}
-		
+
 		foreach ($userCalendars as $calendar) {
-			
+
 			if (!$calendar instanceof ICalendarIsWritable && !$calendar instanceof ICalendarIsShared) {
 				continue;
 			}
-			
+
 			if ($calendar->isDeleted() || !$calendar->isWritable() || $calendar->isShared()) {
 				continue;
 			}
-			
+
 			if (!empty($calendar->search($recipient, ['ATTENDEE'], ['uid' => $eventObject->UID->getValue()]))) {
 				try {
 					if ($calendar instanceof IHandleImipMessage) {
@@ -282,7 +284,7 @@ class Manager implements IManager {
 				}
 			}
 		}
-		
+
 		$this->logger->warning('iMip message event could not be processed because the no corresponding event was found in any calendar');
 		return false;
 	}
@@ -463,5 +465,24 @@ class Manager implements IManager {
 			$this->logger->error('Could not update calendar for iMIP processing', ['exception' => $e]);
 			return false;
 		}
+	}
+
+	public function createEventBuilder(): ICalendarEventBuilder {
+		return new CalendarEventBuilder();
+	}
+
+	public function checkAvailability(
+		DateTimeInterface $start,
+		DateTimeInterface $end,
+		array $attendees,
+	): array {
+		// Mock the API for now ...
+		$results = [];
+		$i = 0;
+		foreach ($attendees as $attendee) {
+			$results[] = new AvailabilityResult($attendee, $i % 2 === 0);
+			$i++;
+		}
+		return $results;
 	}
 }

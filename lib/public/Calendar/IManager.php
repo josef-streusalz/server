@@ -157,4 +157,22 @@ interface IManager {
 	 * @since 25.0.0
 	 */
 	public function handleIMipCancel(string $principalUri, string $sender, ?string $replyTo, string $recipient, string $calendarData): bool;
+
+	/**
+	 * Create a new event builder instance. Please have a look at its documentation and the
+	 * \OCP\Calendar\ICreateFromString interface on how to use it.
+	 *
+	 * @since 31.0.0
+	 */
+	public function createEventBuilder(): ICalendarEventBuilder;
+
+	/**
+	 * Check the availability of the given attendees in the given time range.
+	 *
+	 * @since 31.0.0
+	 *
+	 * @param string[] $attendees
+	 * @return IAvailabilityResult[]
+	 */
+	public function checkAvailability(\DateTimeInterface $start, \DateTimeInterface $end, array $attendees): array;
 }
