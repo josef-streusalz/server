@@ -105,9 +105,23 @@
 				role="region">
 				<section>
 					<NcInputField v-if="isPublicShare"
+						class="sharingTabDetailsView__label"
 						autocomplete="off"
 						:label="t('files_sharing', 'Share label')"
 						:value.sync="share.label" />
+					<NcInputField v-if="isPublicShare && !isNewShare"
+						autocomplete="off"
+						:label="t('files_sharing', 'Share link token')"
+						:helper-text="t('files_sharing', 'Set the public share link token to something easy to remember or generate a new token. It is not recommended to use a guessable token for shares which contain sensitive information.')"
+						show-trailing-button
+						:trailing-button-label="loadingToken ? t('files_sharing', 'Generating…') : t('files_sharing', 'Generate new token')"
+						@trailing-button-click="generateNewToken"
+						:value.sync="share.token">
+						<template #trailing-button-icon>
+							<NcLoadingIcon v-if="loadingToken" />
+							<Refresh v-else :size="20" />
+						</template>
+					</NcInputField>
 					<template v-if="isPublicShare">
 						<NcCheckboxRadioSwitch :checked.sync="isPasswordProtected" :disabled="isPasswordEnforced">
 							{{ t('files_sharing', 'Set password') }}
@@ -227,7 +241,7 @@
 		<div class="sharingTabDetailsView__footer">
 			<div class="button-group">
 				<NcButton data-cy-files-sharing-share-editor-action="cancel"
-					@click="$emit('close-sharing-details')">
+					@click="cancel">
 					{{ t('files_sharing', 'Cancel') }}
 				</NcButton>
 				<NcButton type="primary"
@@ -271,6 +285,7 @@ import UploadIcon from 'vue-material-design-icons/Upload.vue'
 import MenuDownIcon from 'vue-material-design-icons/MenuDown.vue'
 import MenuUpIcon from 'vue-material-design-icons/MenuUp.vue'
 import DotsHorizontalIcon from 'vue-material-design-icons/DotsHorizontal.vue'
+import Refresh from 'vue-material-design-icons/Refresh.vue'
 
 import ExternalShareAction from '../components/ExternalShareAction.vue'
 
@@ -278,6 +293,7 @@ import GeneratePassword from '../utils/GeneratePassword.ts'
 import Share from '../models/Share.ts'
 import ShareRequests from '../mixins/ShareRequests.js'
 import SharesMixin from '../mixins/SharesMixin.js'
+import { generateToken } from '../services/TokenService.ts'
 import logger from '../services/logger.ts'
 
 import {
@@ -310,6 +326,7 @@ export default {
 		MenuDownIcon,
 		MenuUpIcon,
 		DotsHorizontalIcon,
+		Refresh,
 	},
 	mixins: [ShareRequests, SharesMixin],
 	props: {
@@ -338,6 +355,8 @@ export default {
 			isFirstComponentLoad: true,
 			test: false,
 			creating: false,
+			initialToken: this.share.token,
+			loadingToken: false,
 
 			ExternalShareActions: OCA.Sharing.ExternalShareActions.state,
 		}
@@ -765,6 +784,20 @@ export default {
 	},
 
 	methods: {
+		async generateNewToken() {
+			if (this.loadingToken) {
+				return
+			}
+			this.loadingToken = true
+			this.share.token = await generateToken()
+			this.loadingToken = false
+		},
+
+		cancel() {
+			this.share.token = this.initialToken
+			this.$emit('close-sharing-details')
+		},
+
 		updateAtomicPermissions({
 			isReadChecked = this.hasRead,
 			isEditChecked = this.canEdit,
@@ -874,7 +907,7 @@ export default {
 		},
 		async saveShare() {
 			const permissionsAndAttributes = ['permissions', 'attributes', 'note', 'expireDate']
-			const publicShareAttributes = ['label', 'password', 'hideDownload']
+			const publicShareAttributes = ['label', 'password', 'hideDownload', 'token']
 			if (this.isPublicShare) {
 				permissionsAndAttributes.push(...publicShareAttributes)
 			}
@@ -1171,6 +1204,10 @@ export default {
 				padding-inline-start: 1.5em;
 			}
 		}
+	}
+
+	&__label {
+		padding-block-end: 6px;
 	}
 
 	&__delete {
