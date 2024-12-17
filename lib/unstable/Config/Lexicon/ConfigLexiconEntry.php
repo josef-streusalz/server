@@ -48,7 +48,7 @@ class ConfigLexiconEntry {
 	}
 
 	/**
-	 * @inheritDoc
+	 * returns the config key
 	 *
 	 * @return string config key
 	 * @experimental 31.0.0
@@ -58,7 +58,7 @@ class ConfigLexiconEntry {
 	}
 
 	/**
-	 * @inheritDoc
+	 * get expected type for config value
 	 *
 	 * @return ValueType
 	 * @experimental 31.0.0
@@ -113,7 +113,7 @@ class ConfigLexiconEntry {
 	}
 
 	/**
-	 * @inheritDoc
+	 * returns default value
 	 *
 	 * @return string|null NULL if no default is set
 	 * @experimental 31.0.0
@@ -130,10 +130,20 @@ class ConfigLexiconEntry {
 		return $this->default;
 	}
 
+	/**
+	 * convert $entry into string, based on the expected type for config value
+	 *
+	 * @param string|int|float|bool|array $entry
+	 *
+	 * @return string
+	 * @experimental 31.0.0
+	 * @psalm-suppress PossiblyInvalidCast arrays are managed pre-cast
+	 * @psalm-suppress RiskyCast
+	 */
 	public function convertToString(string|int|float|bool|array $entry): string {
 		// in case $default is array but is not expected to be an array...
 		if ($this->getValueType() !== ValueType::ARRAY && is_array($entry)) {
-			$entry = json_encode($entry) ?? '';
+			$entry = json_encode($entry, JSON_THROW_ON_ERROR);
 		}
 
 		return match ($this->getValueType()) {
@@ -147,7 +157,7 @@ class ConfigLexiconEntry {
 	}
 
 	/**
-	 * @inheritDoc
+	 * returns definition
 	 *
 	 * @return string
 	 * @experimental 31.0.0
@@ -157,7 +167,7 @@ class ConfigLexiconEntry {
 	}
 
 	/**
-	 * @inheritDoc
+	 * returns if config key is set as lazy
 	 *
 	 * @see IAppConfig for details on lazy config values
 	 * @return bool TRUE if config value is lazy
@@ -168,7 +178,7 @@ class ConfigLexiconEntry {
 	}
 
 	/**
-	 * @inheritDoc
+	 * returns flags
 	 *
 	 * @see IAppConfig for details on sensitive config values
 	 * @return int bitflag about the config value
@@ -189,7 +199,7 @@ class ConfigLexiconEntry {
 	}
 
 	/**
-	 * @inheritDoc
+	 * returns if config key is set as deprecated
 	 *
 	 * @return bool TRUE if config si deprecated
 	 * @experimental 31.0.0

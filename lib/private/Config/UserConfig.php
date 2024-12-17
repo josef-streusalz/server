@@ -1850,14 +1850,15 @@ class UserConfig implements IUserConfig {
 			$this->logger->notice('User config key ' . $app . '/' . $key . ' is set as deprecated.');
 		}
 
-		if ($this->hasKey($userId, $app, $key, $lazy)) {
+		$enforcedValue = $this->config->getSystemValue('lexicon.default.userconfig.enforced', [])[$app][$key] ?? false;
+		if (!$enforcedValue && $this->hasKey($userId, $app, $key, $lazy)) {
 			return true; // if key exists there should be no need to extract default
 		}
 
 		// default from Lexicon got priority but it can still be overwritten by admin
 		$default = $this->getSystemDefault($app, $configValue) ?? $configValue->getDefault() ?? $default;
 
-		return true;
+		return !$enforcedValue; // returning false will make get() returning $default and set() not changing value in database
 	}
 
 	/**
