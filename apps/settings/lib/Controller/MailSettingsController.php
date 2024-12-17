@@ -56,22 +56,32 @@ class MailSettingsController extends Controller {
 	 */
 	#[AuthorizedAdminSetting(settings: Overview::class)]
 	#[PasswordConfirmationRequired]
-	public function setMailSettings($mail_domain,
-		$mail_from_address,
-		$mail_smtpmode,
-		$mail_smtpsecure,
-		$mail_smtphost,
-		$mail_smtpauth,
-		$mail_smtpport,
-		$mail_sendmailmode) {
-		$params = get_defined_vars();
-		$configs = [];
-		foreach ($params as $key => $value) {
+	public function setMailSettings(
+		string $mail_domain,
+		string $mail_from_address,
+		string $mail_smtpmode,
+		string $mail_smtpsecure,
+		string $mail_smtphost,
+		int $mail_smtpauth,
+		string $mail_smtpport,
+		string $mail_sendmailmode,
+	) {
+		$configs = [
+			'mail_domain' => $mail_domain,
+			'mail_from_address' => $mail_from_address,
+			'mail_smtpmode' => $mail_smtpmode,
+			'mail_smtpsecure' => $mail_smtpsecure,
+			'mail_smtphost' => $mail_smtphost,
+			'mail_smtpauth' => $mail_smtpauth,
+			'mail_smtpport' => $mail_smtpport,
+			'mail_sendmailmode' => $mail_sendmailmode,
+		];
+		foreach ($configs as $key => $value) {
 			$configs[$key] = empty($value) ? null : $value;
 		}
 
 		// Delete passwords from config in case no auth is specified
-		if ($params['mail_smtpauth'] !== 1) {
+		if ($configs['mail_smtpauth'] !== 1) {
 			$configs['mail_smtpname'] = null;
 			$configs['mail_smtppassword'] = null;
 		}
