@@ -16,6 +16,8 @@ use DateTimeInterface;
  * it to a ICS string. The ICS string can be submitted to calendar instances implementing the
  * \OCP\Calendar\ICreateFromString interface.
  *
+ * All setters return self to allow chaining method calls.
+ *
  * @since 31.0.0
  */
 interface ICalendarEventBuilder {
@@ -25,7 +27,7 @@ interface ICalendarEventBuilder {
 	 *
 	 * @since 31.0.0
 	 */
-	public function setStartDate(DateTimeInterface $start): void;
+	public function setStartDate(DateTimeInterface $start): self;
 
 	/**
 	 * Set the end date, time and time zone.
@@ -33,7 +35,7 @@ interface ICalendarEventBuilder {
 	 *
 	 * @since 31.0.0
 	 */
-	public function setEndDate(DateTimeInterface $end): void;
+	public function setEndDate(DateTimeInterface $end): self;
 
 	/**
 	 * Set the event summary or title.
@@ -41,14 +43,21 @@ interface ICalendarEventBuilder {
 	 *
 	 * @since 31.0.0
 	 */
-	public function setSummary(string $summary): void;
+	public function setSummary(string $summary): self;
 
 	/**
 	 * Set the event description.
 	 *
 	 * @since 31.0.0
 	 */
-	public function setDescription(string $description): void;
+	public function setDescription(string $description): self;
+
+	/**
+	 * Set the event location. It can either be a physical address or a URL.
+	 *
+	 * @since 31.0.0
+	 */
+	public function setLocation(string $location): self;
 
 	/**
 	 * Set the event organizer.
@@ -56,7 +65,7 @@ interface ICalendarEventBuilder {
 	 *
 	 * @since 31.0.0
 	 */
-	public function setOrganizer(string $email, ?string $commonName = null): void;
+	public function setOrganizer(string $email, ?string $commonName = null): self;
 
 	/**
 	 * Add a new attendee to the event.
@@ -64,7 +73,7 @@ interface ICalendarEventBuilder {
 	 *
 	 * @since 31.0.0
 	 */
-	public function addAttendee(string $email, ?string $commonName = null): void;
+	public function addAttendee(string $email, ?string $commonName = null): self;
 
 	/**
 	 * Serialize the built event to an ICS string if all required properties  set.

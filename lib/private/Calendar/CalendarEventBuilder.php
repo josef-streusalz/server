@@ -19,31 +19,43 @@ class CalendarEventBuilder implements ICalendarEventBuilder {
 	private ?DateTimeInterface $endDate = null;
 	private ?string $summary = null;
 	private ?string $description = null;
+	private ?string $location = null;
 	private ?array $organizer = null;
 	private array $attendees = [];
 
-	public function setStartDate(DateTimeInterface $start): void {
+	public function setStartDate(DateTimeInterface $start): ICalendarEventBuilder {
 		$this->startDate = $start;
+		return $this;
 	}
 
-	public function setEndDate(DateTimeInterface $end): void {
+	public function setEndDate(DateTimeInterface $end): ICalendarEventBuilder {
 		$this->endDate = $end;
+		return $this;
 	}
 
-	public function setSummary(string $summary): void {
+	public function setSummary(string $summary): ICalendarEventBuilder {
 		$this->summary = $summary;
+		return $this;
 	}
 
-	public function setDescription(string $description): void {
+	public function setDescription(string $description): ICalendarEventBuilder {
 		$this->description = $description;
+		return $this;
 	}
 
-	public function setOrganizer(string $email, ?string $commonName = null): void {
+	public function setLocation(string $location): ICalendarEventBuilder {
+		$this->location = $location;
+		return $this;
+	}
+
+	public function setOrganizer(string $email, ?string $commonName = null): ICalendarEventBuilder {
 		$this->organizer = [$email, $commonName];
+		return $this;
 	}
 
-	public function addAttendee(string $email, ?string $commonName = null): void {
+	public function addAttendee(string $email, ?string $commonName = null): ICalendarEventBuilder {
 		$this->attendees[] = [$email, $commonName];
+		return $this;
 	}
 
 	public function toIcs(): ?string {
@@ -64,6 +76,9 @@ class CalendarEventBuilder implements ICalendarEventBuilder {
 		if ($this->description !== null) {
 			$props['DESCRIPTION'] = $this->description;
 		}
+		if ($this->location !== null) {
+			$props['LOCATION'] = $this->location;
+		}
 		/** @var VEvent $vevent */
 		$vevent = $vcalendar->add('VEVENT', $props);
 		if ($this->organizer !== null) {
@@ -76,7 +91,7 @@ class CalendarEventBuilder implements ICalendarEventBuilder {
 	}
 
 	/**
-	 * @param string[] $tuple A tuple of [$email, $commonName] where $commonName may be null.
+	 * @param array{0: string, 1: ?string} $tuple A tuple of [$email, $commonName] where $commonName may be null.
 	 */
 	private static function addAttendeeToVEvent(VEvent $vevent, string $name, array $tuple): void {
 		[$email, $cn] = $tuple;
