@@ -8,6 +8,7 @@
 namespace OC\OCS;
 
 use OCP\Capabilities\ICapability;
+use OCP\Conversion\IConversionManager;
 use OCP\IConfig;
 use OCP\IURLGenerator;
 
@@ -22,6 +23,7 @@ class CoreCapabilities implements ICapability {
 	 */
 	public function __construct(
 		private IConfig $config,
+		private IConversionManager $conversionManager,
 	) {
 	}
 
@@ -34,6 +36,7 @@ class CoreCapabilities implements ICapability {
 	 *         webdav-root: string,
 	 *         reference-api: boolean,
 	 *         reference-regex: string,
+	 *     	   conversions: array<string, string|array<string>>,
 	 *         mod-rewrite-working: boolean,
 	 *     },
 	 * }
@@ -45,6 +48,7 @@ class CoreCapabilities implements ICapability {
 				'webdav-root' => $this->config->getSystemValueString('webdav-root', 'remote.php/webdav'),
 				'reference-api' => true,
 				'reference-regex' => IURLGenerator::URL_REGEX_NO_MODIFIERS,
+				'conversions' => array_merge([], ...$this->conversionManager->getMimeTypes()),
 				'mod-rewrite-working' => $this->config->getSystemValueBool('htaccess.IgnoreFrontController') || getenv('front_controller_active') === 'true',
 			],
 		];
