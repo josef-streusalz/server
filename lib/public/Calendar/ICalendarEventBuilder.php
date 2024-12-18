@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace OCP\Calendar;
 
 use DateTimeInterface;
+use OCP\Calendar\Exceptions\CalendarException;
 
 /**
  * The calendar event builder can be used to conveniently build a calendar event and then serialize
@@ -76,11 +77,19 @@ interface ICalendarEventBuilder {
 	public function addAttendee(string $email, ?string $commonName = null): self;
 
 	/**
-	 * Serialize the built event to an ICS string if all required properties  set.
+	 * Serialize the built event to an ICS string if all required properties set.
 	 *
 	 * @since 31.0.0
 	 *
 	 * @return string|null The serialized ICS string if all required properties have been set or null otherwise
 	 */
 	public function toIcs(): ?string;
+
+	/**
+	 * Create the event in the given calendar.
+	 *
+	 * @throws CalendarException If writing the event to the calendar fails
+	 * @return string The filename of the created event
+	 */
+	public function createInCalendar(ICreateFromString $calendar): string;
 }

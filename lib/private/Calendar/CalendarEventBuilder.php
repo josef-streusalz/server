@@ -11,6 +11,7 @@ namespace OC\Calendar;
 
 use DateTimeInterface;
 use OCP\Calendar\ICalendarEventBuilder;
+use OCP\Calendar\ICreateFromString;
 use Sabre\VObject\Component\VCalendar;
 use Sabre\VObject\Component\VEvent;
 
@@ -22,6 +23,11 @@ class CalendarEventBuilder implements ICalendarEventBuilder {
 	private ?string $location = null;
 	private ?array $organizer = null;
 	private array $attendees = [];
+
+	public function __construct(
+		private readonly string $uid,
+	) {
+	}
 
 	public function setStartDate(DateTimeInterface $start): ICalendarEventBuilder {
 		$this->startDate = $start;
@@ -69,6 +75,7 @@ class CalendarEventBuilder implements ICalendarEventBuilder {
 
 		$vcalendar = new VCalendar();
 		$props = [
+			'UID' => $this->uid,
 			'SUMMARY' => $this->summary,
 			'DTSTART' => $this->startDate,
 			'DTEND' => $this->endDate,
@@ -88,6 +95,12 @@ class CalendarEventBuilder implements ICalendarEventBuilder {
 			self::addAttendeeToVEvent($vevent, 'ATTENDEE', $attendee);
 		}
 		return $vcalendar->serialize();
+	}
+
+	public function createInCalendar(ICreateFromString $calendar): string {
+		$fileName = $this->uid . '.ics';
+		$calendar->createFromString($fileName, $this->toIcs());
+		return $fileName;
 	}
 
 	/**

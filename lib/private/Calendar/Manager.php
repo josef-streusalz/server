@@ -21,6 +21,7 @@ use OCP\Calendar\ICalendarQuery;
 use OCP\Calendar\ICreateFromString;
 use OCP\Calendar\IHandleImipMessage;
 use OCP\Calendar\IManager;
+use OCP\Security\ISecureRandom;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Sabre\VObject\Component\VCalendar;
@@ -47,6 +48,7 @@ class Manager implements IManager {
 		private ContainerInterface $container,
 		private LoggerInterface $logger,
 		private ITimeFactory $timeFactory,
+		private ISecureRandom $random,
 	) {
 	}
 
@@ -468,7 +470,8 @@ class Manager implements IManager {
 	}
 
 	public function createEventBuilder(): ICalendarEventBuilder {
-		return new CalendarEventBuilder();
+		$uid = $this->random->generate(32, ISecureRandom::CHAR_ALPHANUMERIC);
+		return new CalendarEventBuilder($uid);
 	}
 
 	public function checkAvailability(
