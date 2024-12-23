@@ -10,156 +10,201 @@
 		<div class="modal__content">
 			<h2 id="form-name">{{ t('settings', 'Advanced deploy options') }}</h2>
 			<p class="description" style="text-align: center;">
-				{{ t('settings', 'Edit ExApp deploy options before installation') }}
+				{{ configuredDeployOptions === null ? t('settings', 'Edit ExApp deploy options before installation') : t('settings', 'Configured ExApp deploy options. Can be set only during installation') }}.
+				<a href="https://docs.nextcloud.com/server/latest/admin_manual/exapps_management/AdvancedDeployOptions.html">Learn more</a>
 			</p>
 
-			<h3 v-if="environmentVariables.length > 0">{{ t('settings', 'Environment variables') }}</h3>
-			<div v-for="envVar in environmentVariables" :key="envVar.envName"
-				class="deploy-option">
-				<NcTextField :label="envVar.displayName" :value.sync="deployOptions.environment_variables[envVar.envName]" />
-				<p class="description">{{ envVar.description }}</p>
-			</div>
-
+			<h3 v-if="environmentVariables.length > 0 || (configuredDeployOptions !== null && configuredDeployOptions.environment_variables.length > 0)">
+				{{ t('settings', 'Environment variables') }}
+			</h3>
+			<template v-if="configuredDeployOptions === null">
+				<div v-for="envVar in environmentVariables" :key="envVar.envName"
+						 class="deploy-option">
+					<NcTextField :label="envVar.displayName" :value.sync="deployOptions.environment_variables[envVar.envName]" />
+					<p class="description">{{ envVar.description }}</p>
+				</div>
+			</template>
+			<template v-else-if="configuredDeployOptions.environment_variables.length > 0">
+				<p class="description">{{ t('settings', 'ExApp container environment variables (ExApp-reserved envs are excluded)') }}</p>
+				<ul class="envs">
+					<li v-for="envVar in configuredDeployOptions.environment_variables" :key="envVar.split('=')[0]">
+						<NcTextField :label="envVar.split('=')[0]" :value="envVar.split('=')[1]" readonly />
+					</li>
+				</ul>
+			</template>
+			<template v-else>
+				<p class="description">{{ t('settings', 'No environment variables defined') }}</p>
+			</template>
 
 			<h3>{{ t('settings', 'Mounts') }}</h3>
-			<p class="description">{{ t('settings', 'Define host folder mounts to bind to ExApp container') }}</p>
-			<p class="warning">{{ t('settings', 'Must exist prior to installing the ExApp') }}</p>
-
-			<div v-for="mount in deployOptions.mounts"
+			<template v-if="configuredDeployOptions === null">
+				<p class="description">{{ t('settings', 'Define host folder mounts to bind to ExApp container') }}</p>
+				<p class="warning">{{ t('settings', 'Must exist on Deploy daemon host prior to installing the ExApp') }}</p>
+				<div v-for="mount in deployOptions.mounts"
+						 class="deploy-option"
+						 style="display: flex; align-items: center; justify-content: space-between; flex-direction: row;">
+					<NcTextField :label="t('settings', 'Host path')" :value.sync="mount.hostPath" />
+					<NcTextField :label="t('settings', 'Container path')" :value.sync="mount.containerPath" />
+					<NcCheckboxRadioSwitch :checked.sync="mount.readonly">
+						{{ t('settings', 'Read-only') }}
+					</NcCheckboxRadioSwitch>
+					<NcButton
+						:aria-label="t('settings', 'Remove mount')"
+						style="margin-top: 6px;"
+						@click="removeMount(mount)">
+						<template #icon>
+							<NcIconSvgWrapper :path="mdiDelete" />
+						</template>
+					</NcButton>
+				</div>
+				<div v-if="addingMount" class="deploy-option">
+					<h4>{{ t('settings', 'New mount') }}</h4>
+					<div style="display: flex; align-items: center; justify-content: space-between; flex-direction: row;">
+						<NcTextField
+							:label="t('settings', 'Host path')"
+							:aria-label="t('settings', 'Enter path to host folder')"
+							:value.sync="newMountPoint.hostPath" />
+						<NcTextField
+							:label="t('settings', 'Container path')"
+							:aria-label="t('settings', 'Enter path to container folder')"
+							:value.sync="newMountPoint.containerPath" />
+						<NcCheckboxRadioSwitch
+							:checked.sync="newMountPoint.readonly"
+							:aria-label="t('settings', 'Toggle read-only mode')">
+							{{ t('settings', 'Read-only') }}
+						</NcCheckboxRadioSwitch>
+					</div>
+					<div style="display: flex; align-items: center; margin-top: 4px;">
+						<NcButton
+							:aria-label="t('settings', 'Confirm adding new mount')"
+							@click="addMountPoint">
+							<template #icon>
+								<NcIconSvgWrapper :path="mdiCheck" />
+							</template>
+							{{ t('settings', 'Confirm') }}
+						</NcButton>
+						<NcButton
+							:aria-label="t('settings', 'Cancel adding mount')"
+							style="margin-left: 4px;"
+							@click="cancelAddMountPoint">
+							<template #icon>
+								<NcIconSvgWrapper :path="mdiClose" />
+							</template>
+							{{ t('settings', 'Cancel') }}
+						</NcButton>
+					</div>
+				</div>
+				<NcButton
+					v-if="!addingMount"
+					:aria-label="t('settings', 'Add mount')"
+					style="margin-top: 5px;"
+					@click="() => addingMount = true">
+					<template #icon>
+						<NcIconSvgWrapper :path="mdiPlus" />
+					</template>
+					{{ t('settings', 'Add mount') }}
+				</NcButton>
+			</template>
+			<template v-else-if="configuredDeployOptions.mounts.length > 0">
+				<p class="description">{{ t('settings', 'ExApp container mounts') }}</p>
+				<div v-for="mount in configuredDeployOptions.mounts"
 				class="deploy-option"
 				style="display: flex; align-items: center; justify-content: space-between; flex-direction: row;">
-				<NcTextField :label="t('settings', 'Host path')" :value.sync="mount.hostPath" />
-				<NcTextField :label="t('settings', 'Container path')" :value.sync="mount.containerPath" />
-				<NcCheckboxRadioSwitch :checked.sync="mount.readonly">
-					{{ t('settings', 'Read-only') }}
-				</NcCheckboxRadioSwitch>
-				<NcButton
-					:aria-label="t('settings', 'Remove mount')"
-					style="margin-top: 6px;"
-					@click="removeMount(mount)">
-					<template #icon>
-						<NcIconSvgWrapper :path="mdiDelete" />
-					</template>
-				</NcButton>
-			</div>
-
-			<div v-if="addingMount" class="deploy-option">
-				<h4>{{ t('settings', 'New mount') }}</h4>
-				<div style="display: flex; align-items: center; justify-content: space-between; flex-direction: row;">
-					<NcTextField
-						:label="t('settings', 'Host path')"
-						:aria-label="t('settings', 'Enter path to host folder')"
-						:value.sync="newMountPoint.hostPath" />
-					<NcTextField
-						:label="t('settings', 'Container path')"
-						:aria-label="t('settings', 'Enter path to container folder')"
-						:value.sync="newMountPoint.containerPath" />
-					<NcCheckboxRadioSwitch
-						:checked.sync="newMountPoint.readonly"
-						:aria-label="t('settings', 'Toggle read-only mode')">
+					<NcTextField :label="t('settings', 'Host path')" :value.sync="mount.hostPath" readonly />
+					<NcTextField :label="t('settings', 'Container path')" :value.sync="mount.containerPath" readonly />
+					<NcCheckboxRadioSwitch :checked.sync="mount.readonly" disabled>
 						{{ t('settings', 'Read-only') }}
 					</NcCheckboxRadioSwitch>
 				</div>
-				<div style="display: flex; align-items: center; margin-top: 4px;">
-					<NcButton
-						:aria-label="t('settings', 'Confirm adding new mount')"
-						@click="addMountPoint">
-						<template #icon>
-							<NcIconSvgWrapper :path="mdiCheck" />
-						</template>
-						{{ t('settings', 'Confirm') }}
-					</NcButton>
-					<NcButton
-						:aria-label="t('settings', 'Cancel adding mount')"
-						style="margin-left: 4px;"
-						@click="cancelAddMountPoint">
-						<template #icon>
-							<NcIconSvgWrapper :path="mdiClose" />
-						</template>
-						{{ t('settings', 'Cancel') }}
-					</NcButton>
-				</div>
-			</div>
-			<NcButton
-				v-if="!addingMount"
-				:aria-label="t('settings', 'Add mount')"
-				style="margin-top: 5px;"
-				@click="() => addingMount = true">
-				<template #icon>
-					<NcIconSvgWrapper :path="mdiPlus" />
-				</template>
-				{{ t('settings', 'Add mount') }}
-			</NcButton>
+			</template>
+			<template v-else>
+				<p class="description">{{ t('settings', 'No mounts defined') }}</p>
+			</template>
 
 
 			<h3>{{ t('settings', 'Port bindings') }}</h3>
-			<p class="description">{{ t('settings', 'Define ports to expose from ExApp container') }}</p>
 
-			<div v-for="port in deployOptions.ports"
-				class="deploy-option"
-				style="display: flex; align-items: center; justify-content: space-between; flex-direction: row;">
-				<NcTextField :label="t('settings', 'Host port')" :value.sync="port.hostPort" />
-				<NcTextField :label="t('settings', 'Host IP')" :value.sync="port.hostIp" />
-				<NcTextField :label="t('settings', 'Container port')" :value.sync="port.containerPort" />
+			<template v-if="configuredDeployOptions === null">
+				<p class="description">{{ t('settings', 'Define ports to expose from ExApp container') }}</p>
+				<div v-for="port in deployOptions.ports"
+					class="deploy-option"
+					style="display: flex; align-items: center; justify-content: space-between; flex-direction: row;">
+					<NcTextField :label="t('settings', 'Host port')" :value.sync="port.hostPort" />
+					<NcTextField :label="t('settings', 'Host IP')" :value.sync="port.hostIp" />
+					<NcTextField :label="t('settings', 'Container port')" :value.sync="port.containerPort" />
+					<NcButton
+						:aria-label="t('settings', 'Remove port binding')"
+						style="margin-top: 6px;"
+						@click="removePortBinding(port)">
+						<template #icon>
+							<NcIconSvgWrapper :path="mdiDelete" />
+						</template>
+					</NcButton>
+				</div>
+
+				<div v-if="addingPortBinding" class="deploy-option">
+					<h4>{{ t('settings', 'New port binding') }}</h4>
+					<div style="display: flex; align-items: center; justify-content: space-between; flex-direction: column; width: 100%;">
+						<NcTextField
+							:label="t('settings', 'Host port (e.g. 8080, 9443)')"
+							:aria-label="t('settings', 'Enter host port (e.g. 8080, 9443)')"
+							:value.sync="newPortBinding.hostPort" />
+						<NcTextField
+							:label="t('settings', 'Host IP (e.g. 0.0.0.0, 127.0.0.1)')"
+							:aria-label="t('settings', 'Enter host IP (e.g. 0.0.0.0, 127.0.0.1)')"
+							:value.sync="newPortBinding.hostIp" />
+						<NcTextField
+							:label="t('settings', 'Port inside container (e.g. 80, 443, 80/tcp, 443/udp)')"
+							:aria-label="t('settings', 'Enter port inside container (e.g. 80, 443, 80/tcp, 443/udp)')"
+							:value.sync="newPortBinding.containerPort" />
+					</div>
+					<div style="display: flex; align-items: center; margin-top: 4px;">
+						<NcButton
+							:aria-label="t('settings', 'Confirm adding new port binding')"
+							@click="addPortBinding">
+							<template #icon>
+								<NcIconSvgWrapper :path="mdiCheck" />
+							</template>
+							{{ t('settings', 'Confirm') }}
+						</NcButton>
+						<NcButton
+							:aria-label="t('settings', 'Cancel adding port binding')"
+							style="margin-left: 4px;"
+							@click="cancelAddPortBinding">
+							<template #icon>
+								<NcIconSvgWrapper :path="mdiClose" />
+							</template>
+							{{ t('settings', 'Cancel') }}
+						</NcButton>
+					</div>
+				</div>
 				<NcButton
-					:aria-label="t('settings', 'Remove port binding')"
-					style="margin-top: 6px;"
-					@click="removePortBinding(port)">
+					v-if="!addingPortBinding"
+					:aria-label="t('settings', 'Add port binding')"
+					style="margin-top: 5px;"
+					@click="() => addingPortBinding = true">
 					<template #icon>
-						<NcIconSvgWrapper :path="mdiDelete" />
+						<NcIconSvgWrapper :path="mdiPlus" />
 					</template>
+					{{ t('settings', 'Add port binding') }}
 				</NcButton>
-			</div>
-
-			<div v-if="addingPortBinding" class="deploy-option">
-				<h4>{{ t('settings', 'New port binding') }}</h4>
-				<div style="display: flex; align-items: center; justify-content: space-between; flex-direction: column; width: 100%;">
-					<NcTextField
-						:label="t('settings', 'Host port (e.g. 80, 443, 80/tcp, 443/udp')"
-						:aria-label="t('settings', 'Enter host port (e.g. 80, 443, 80/tcp, 443/udp')"
-						:value.sync="newPortBinding.hostPort" />
-					<NcTextField
-						:label="t('settings', 'Optional Host IP (e.g. 0.0.0.0, 127.0.0.1)')"
-						:aria-label="t('settings', 'Optional: Enter host IP (e.g. 0.0.0.0, 127.0.0.1)')"
-						:value.sync="newPortBinding.hostIp" />
-					<NcTextField
-						:label="t('settings', 'Port inside container (e.g. 8080)')"
-						:aria-label="t('settings', 'Enter port inside container (e.g. 8080)')"
-						:value.sync="newPortBinding.containerPort" />
+			</template>
+			<template v-else-if="configuredDeployOptions.ports.length > 0">
+				<p class="description">{{ t('settings', 'Defined ports bound to ExApp container') }}</p>
+				<div v-for="port in configuredDeployOptions.ports"
+					class="deploy-option"
+					style="display: flex; align-items: center; justify-content: space-between; flex-direction: row;">
+					<NcTextField :label="t('settings', 'Host port')" :value.sync="port.hostPort" readonly />
+					<NcTextField :label="t('settings', 'Host IP')" :value.sync="port.hostIp" readonly />
+					<NcTextField :label="t('settings', 'Container port')" :value.sync="port.containerPort" readonly />
 				</div>
-				<div style="display: flex; align-items: center; margin-top: 4px;">
-					<NcButton
-						:aria-label="t('settings', 'Confirm adding new port binding')"
-						@click="addPortBinding">
-						<template #icon>
-							<NcIconSvgWrapper :path="mdiCheck" />
-						</template>
-						{{ t('settings', 'Confirm') }}
-					</NcButton>
-					<NcButton
-						:aria-label="t('settings', 'Cancel adding port binding')"
-						style="margin-left: 4px;"
-						@click="cancelAddPortBinding">
-						<template #icon>
-							<NcIconSvgWrapper :path="mdiClose" />
-						</template>
-						{{ t('settings', 'Cancel') }}
-					</NcButton>
-				</div>
-			</div>
-			<NcButton
-				v-if="!addingPortBinding"
-				:aria-label="t('settings', 'Add port binding')"
-				style="margin-top: 5px;"
-				@click="() => addingPortBinding = true">
-				<template #icon>
-					<NcIconSvgWrapper :path="mdiPlus" />
-				</template>
-				{{ t('settings', 'Add port binding') }}
-			</NcButton>
+			</template>
+			<template v-else>
+				<p class="description">{{ t('settings', 'No port bindings defined') }}</p>
+			</template>
 
 
-			<NcButton v-if="!app.active && (app.canInstall || app.isCompatible)"
+			<NcButton v-if="!app.active && (app.canInstall || app.isCompatible) && configuredDeployOptions === null"
 				:title="enableButtonTooltip"
 				:aria-label="enableButtonTooltip"
 				type="primary"
@@ -177,6 +222,9 @@
 
 <script>
 import { computed, ref } from 'vue'
+
+import axios from '@nextcloud/axios'
+import { generateUrl } from '@nextcloud/router'
 
 import NcModal from '@nextcloud/vue/dist/Components/NcModal.js'
 import NcTextField from '@nextcloud/vue/dist/Components/NcTextField.js'
@@ -243,6 +291,15 @@ export default {
 			mdiDelete,
 		}
 	},
+	watch: {
+		show(newShow) {
+			if (newShow) {
+				this.fetchExAppDeployOptions()
+			} else {
+				this.configuredDeployOptions = null
+			}
+		},
+	},
 	data() {
 		return {
 			addingMount: false,
@@ -254,9 +311,10 @@ export default {
 			addingPortBinding: false,
 			newPortBinding: {
 				hostPort: '',
-				hostIp: '',
+				hostIp: '127.0.0.1', // to override Docker default 0.0.0.0 (https://docs.docker.com/reference/cli/docker/container/run/#publish)
 				containerPort: '',
 			},
+			configuredDeployOptions: null,
 		}
 	},
 	methods: {
@@ -284,7 +342,7 @@ export default {
 			this.deployOptions.ports.push(this.newPortBinding)
 			this.newPortBinding = {
 				hostPort: '',
-				hostIp: '',
+				hostIp: '127.0.0.1',
 				containerPort: '',
 			}
 			this.addingPortBinding = false
@@ -292,13 +350,22 @@ export default {
 		cancelAddPortBinding() {
 			this.newPortBinding = {
 				hostPort: '',
-				hostIp: '',
+				hostIp: '127.0.0.1',
 				containerPort: '',
 			}
 			this.addingPortBinding = false
 		},
 		removePortBinding(portToRemove) {
 			this.deployOptions.ports = this.deployOptions.ports.filter(port => port !== portToRemove)
+		},
+		async fetchExAppDeployOptions() {
+			return axios.get(generateUrl(`/apps/app_api/apps/deploy-options/${this.app.id}`))
+				.then(response => {
+					this.configuredDeployOptions = response.data
+				})
+				.catch(() => {
+					this.configuredDeployOptions = null
+				})
 		},
 	},
 }
@@ -318,6 +385,17 @@ export default {
 	display: flex;
 	flex-direction: column;
 	align-items: flex-start;
+}
+
+.envs {
+	width: 100%;
+	overflow: auto;
+	height: 100%;
+	max-height: 300px;
+
+	li {
+		margin: 10px 0;
+	}
 }
 
 .description {

@@ -78,6 +78,7 @@
 						:disabled="installing || isLoading"
 						@click="forceEnable(app.id)">
 					<NcButton
+						v-if="app?.app_api && (app.canInstall || app.isCompatible)"
 						class="advanced-deploy-options"
 						:aria-label="t('settings', 'Advanced deploy options')"
 						type="secondary"
@@ -85,6 +86,7 @@
 						<template #icon>
 							<NcIconSvgWrapper :path="mdiToyBrickPlus" />
 						</template>
+						{{ t('settings', 'Deploy options') }}
 					</NcButton>
 				</div>
 				<p v-if="!defaultDeployDaemonAccessible" class="warning">
