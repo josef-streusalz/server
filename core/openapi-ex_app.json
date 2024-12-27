@@ -33,6 +33,7 @@
                             "webdav-root",
                             "reference-api",
                             "reference-regex",
+                            "conversions",
                             "mod-rewrite-working"
                         ],
                         "properties": {
@@ -48,6 +49,12 @@
                             },
                             "reference-regex": {
                                 "type": "string"
+                            },
+                            "conversions": {
+                                "type": "object",
+                                "additionalProperties": {
+                                    "type": "object"
+                                }
                             },
                             "mod-rewrite-working": {
                                 "type": "boolean"

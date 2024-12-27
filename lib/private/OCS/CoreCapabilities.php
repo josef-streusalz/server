@@ -36,7 +36,7 @@ class CoreCapabilities implements ICapability {
 	 *         webdav-root: string,
 	 *         reference-api: boolean,
 	 *         reference-regex: string,
-	 *     	   conversions: array<string, string|array<string>>,
+	 *     	   conversions: array<string, mixed>,
 	 *         mod-rewrite-working: boolean,
 	 *     },
 	 * }
