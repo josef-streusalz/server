@@ -27,6 +27,8 @@
 !/apps/federatedfilesharing
 !/apps/sharebymail
 !/apps/encryption
+!apps/metadatagenerator
+!/apps/metadatagenerator
 !/apps/files_external
 !/apps/files_reminders
 !/apps/files_sharing

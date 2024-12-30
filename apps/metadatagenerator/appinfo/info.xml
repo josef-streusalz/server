@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<info xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:noNamespaceSchemaLocation="https://apps.nextcloud.com/schema/apps/info.xsd">
+    <id>metadatagenerator</id>
+    <name>Metadata Generator</name>
+    <summary>A simple app for generating metadata.</summary>
+    <description>This app renders a simple HTML page.</description>
+    <version>1.0.0</version>
+    <licence>agpl</licence>
+    <author mail="your-email@example.com">Your Name</author>
+    <namespace>MetaDataGenerator</namespace>
+    <category>tools</category>
+    <dependencies>
+        <nextcloud min-version="29" max-version="31"/>
+    </dependencies>
+    <navigations>
+        <navigation>
+            <id>metadatagenerator</id>
+            <name>Metadata Generator</name>
+            <route>metadatagenerator.page.main</route>
+            <icon>app.svg</icon>
+            <order>8</order>
+        </navigation>
+    </navigations>
+</info>

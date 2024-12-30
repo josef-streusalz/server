@@ -1,0 +1,111 @@
+body {
+    font-family: Arial, sans-serif;
+}
+
+.container {
+    margin: 20px;
+}
+
+.field {
+    display: flex;
+    margin-bottom: 10px;
+}
+
+.field input {
+    margin-right: 10px;
+    padding: 5px;
+}
+
+button {
+    padding: 10px 15px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    margin: 10px 0;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+pre {
+    background-color: #f4f4f4;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+/* Modal Styling */
+#file-browser-modal,
+#folder-browser-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 20px;
+    z-index: 1000;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    display: none; /* Hidden by default */
+}
+
+#file-browser-modal {
+    width: 80%;
+    height: 80%;
+    overflow-y: auto;
+}
+
+#folder-container {
+    margin: 10px 0;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.folder-item {
+    padding: 10px;
+    margin: 5px 0;
+    cursor: pointer;
+    background-color: #f9f9f9;
+    border-radius: 4px;
+    border-bottom: 1px solid #ddd;
+    font-size: 16px;
+}
+
+.folder-item:hover {
+    background-color: #007bff;
+    color: white;
+}
+
+#folder-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+}
+
+/* Specific Button Styles */
+#select-folder-button,
+#save-to-nextcloud {
+    background: #0078d7;
+}
+
+#select-folder-button:hover,
+#save-to-nextcloud:hover {
+    background: #005bb5;
+}
+
+#close-modal {
+    background: #d9534f;
+}
+
+#close-modal:hover {
+    background: #c9302c;
+}
