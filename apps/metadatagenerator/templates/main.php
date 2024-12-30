@@ -26,6 +26,7 @@ Util::addStyle($appId, 'style');
         <div id="folder-browser-modal" style="display: none;">
             <div id="folder-container"></div>
             <p id="current-folder-path">Selected Folder: /</p>
+            <button id="back-button">Back</button>
             <button id="select-folder-button">Select Current Folder</button>
             <button id="save-to-nextcloud">Save to Nextcloud</button>
             <button id="close-modal">Close</button>

@@ -9,8 +9,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeModalButton = document.getElementById('close-modal');
     const browseFolderButton = document.getElementById('browse-folder');
     const saveLocalButton = document.getElementById('save');
+    const backButton = document.getElementById('back-button'); // Add the back button
 
     let selectedFolder = '/';
+    let folderHistory = [];  // History of visited folders
 
     // Add key-value fields dynamically
     function addField() {
@@ -99,6 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     folderDiv.dataset.path = folder.path;
                     folderDiv.addEventListener('click', () => {
                         selectedFolder = folder.path;
+                        folderHistory.push(path);  // Push current path to history before navigating
                         currentFolderPath.textContent = `Current Folder: ${selectedFolder}`;
                         loadFolderStructure(folder.path); // Navigate into the folder
                     });
@@ -112,7 +115,16 @@ document.addEventListener('DOMContentLoaded', () => {
             folderContainer.innerHTML = `<p>Error: ${error.message}</p>`;
         }
     }
-    
+
+    // Back button functionality
+    backButton.addEventListener('click', () => {
+        if (folderHistory.length > 0) {
+            const previousPath = folderHistory.pop();  // Get the last folder in the history
+            loadFolderStructure(previousPath);  // Navigate back to the previous folder
+        } else {
+            alert('You are already at the root folder.');
+        }
+    });
 
     // Open the folder browser modal
     function openFolderBrowser() {
@@ -140,6 +152,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
+            // Sanitize the path to ensure no redundancy (remove '/admin/files/' if it already exists)
+            let sanitizedPath = selectedFolder;
+            if (sanitizedPath.startsWith('/admin/files/')) {
+                sanitizedPath = sanitizedPath.substring('/admin/files/'.length); // Remove '/admin/files/' from the start of the path
+            }
+
             const response = await fetch('/index.php/apps/metadatagenerator/api/save', {
                 method: 'POST',
                 headers: {
@@ -147,7 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     'OCS-APIREQUEST': 'true',
                 },
                 body: JSON.stringify({
-                    folder: selectedFolder,
+                    folder: sanitizedPath,  // Use the sanitized path here
                     content: xmlContent,
                 }),
             });
