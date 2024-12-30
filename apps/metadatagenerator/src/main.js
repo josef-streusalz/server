@@ -4,7 +4,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const folderModal = document.getElementById('folder-browser-modal');
     const folderContainer = document.getElementById('folder-container');
     const currentFolderPath = document.getElementById('current-folder-path');
-    const selectFolderButton = document.getElementById('select-folder-button');
     const saveToNextcloudButton = document.getElementById('save-to-nextcloud');
     const closeModalButton = document.getElementById('close-modal');
     const browseFolderButton = document.getElementById('browse-folder');
@@ -188,9 +187,5 @@ document.addEventListener('DOMContentLoaded', () => {
     saveLocalButton.addEventListener('click', saveAsXML);
     browseFolderButton.addEventListener('click', openFolderBrowser);
     closeModalButton.addEventListener('click', closeFolderBrowser);
-    selectFolderButton.addEventListener('click', () => {
-        alert(`Selected Folder: ${selectedFolder}`);
-        closeFolderBrowser();
-    });
     saveToNextcloudButton.addEventListener('click', saveToNextcloud);
 });
