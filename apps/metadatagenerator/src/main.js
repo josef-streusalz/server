@@ -9,8 +9,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const browseFolderButton = document.getElementById('browse-folder');
     const saveLocalButton = document.getElementById('save');
     const backButton = document.getElementById('back-button'); // Add the back button
+    const fileContentContainer = document.getElementById('file-content'); // Area to display file content
+    const fileViewer = document.getElementById('file-viewer'); // Add this to display file content
 
     let selectedFolder = '/';
+    let selectedFile = null; // Variable to store the selected file
     let folderHistory = [];  // History of visited folders
 
     // Add key-value fields dynamically
@@ -65,18 +68,18 @@ document.addEventListener('DOMContentLoaded', () => {
         link.click();
     }
 
-    // Load folder structure for browsing
+    // Load folder structure for browsing (Including files content)
     async function loadFolderStructure(path = '/') {
         try {
             folderContainer.innerHTML = '<p>Loading...</p>'; // Show a loading message
-    
+
             // Sanitize the path to ensure no redundancy (remove '/admin/files/' if it already exists)
             if (path.startsWith('/admin/files/')) {
                 path = path.substring('/admin/files/'.length); // Remove '/admin/files/' from the start of the path
             }
-    
+
             const response = await fetch(`/index.php/apps/metadatagenerator/api/folder-structure?path=${encodeURIComponent(path)}`);
-    
+
             // Check if the response is JSON
             const contentType = response.headers.get('content-type');
             if (!contentType || !contentType.includes('application/json')) {
@@ -84,14 +87,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error('Server returned non-JSON response:', errorText);
                 throw new Error('Invalid response from server: Expected JSON');
             }
-    
+
             const data = await response.json();
-    
+
             if (data.error) {
                 throw new Error(data.error);
             }
-    
+
             folderContainer.innerHTML = ''; // Clear previous content
+
+            // Handle folders
             if (data.folders && data.folders.length > 0) {
                 data.folders.forEach(folder => {
                     const folderDiv = document.createElement('div');
@@ -109,9 +114,53 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 folderContainer.innerHTML = '<p>No folders available.</p>';
             }
+
+            // Handle files
+            if (data.files && data.files.length > 0) {
+                data.files.forEach(file => {
+                    const fileDiv = document.createElement('div');
+                    fileDiv.className = 'file-item';
+                    fileDiv.textContent = file.name;
+                    fileDiv.dataset.path = file.path;
+                    fileDiv.addEventListener('click', () => {
+                        selectedFile = file.path; // Store the selected file
+                        displayFileContent(file.path); // Display file content
+                    });
+                    folderContainer.appendChild(fileDiv);
+                });
+            } else {
+                folderContainer.innerHTML += '<p>No files available in this folder.</p>';
+            }
         } catch (error) {
             console.error('Error loading folders:', error);
             folderContainer.innerHTML = `<p>Error: ${error.message}</p>`;
+        }
+    }
+
+    // Display the content of a selected file
+    async function displayFileContent(filePath) {
+        try {
+            const response = await fetch(`/index.php/apps/metadatagenerator/api/file-content?path=${encodeURIComponent(filePath)}`);
+
+            // Check if the response is JSON
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                const errorText = await response.text();
+                console.error('Server returned non-JSON response:', errorText);
+                throw new Error('Invalid response from server: Expected JSON');
+            }
+
+            const data = await response.json();
+
+            if (data.error) {
+                throw new Error(data.error);
+            }
+
+            // Display the file content in the designated container
+            fileContentContainer.innerHTML = `<h3>File Content:</h3><pre>${data.content}</pre>`;
+        } catch (error) {
+            console.error('Error displaying file content:', error);
+            fileContentContainer.innerHTML = `<p>Error: ${error.message}</p>`;
         }
     }
 

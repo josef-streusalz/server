@@ -29,45 +29,46 @@ class ApiController extends Controller {
     }
 
     /**
-     * Get the folder structure for the current user.
+     * Get the folder structure for the current user, including folders and files.
      *
      * @NoCSRFRequired
      * @param string $path The path to the folder (default: '/').
-     * @return DataResponse JSON response with the folder structure.
+     * @return DataResponse JSON response with the folder structure and files.
      */
     public function getFolderStructure(string $path = '/'): DataResponse {
-        $path = rtrim($path, '/');
-    
-
-
+        $path = rtrim($path, '/'); // Ensure no trailing slashes
 
         try {
             $userFolder = $this->rootFolder->getUserFolder($this->userId);
             $targetFolder = $path === '/' ? $userFolder : $userFolder->get($path);
-    
+
             if (!$targetFolder instanceof \OCP\Files\Folder) {
                 throw new \Exception('Invalid folder path: Not a folder');
             }
-    
+
             $folders = [];
+            $files = [];
+            
             foreach ($targetFolder->getDirectoryListing() as $item) {
                 if ($item instanceof \OCP\Files\Folder) {
                     $folders[] = [
                         'name' => $item->getName(),
                         'path' => $item->getPath(),
                     ];
+                } elseif ($item instanceof \OCP\Files\File) {
+                    $files[] = [
+                        'name' => $item->getName(),
+                        'path' => $item->getPath(),
+                    ];
                 }
             }
-    
-            return new DataResponse(['folders' => $folders]);
+
+            return new DataResponse(['folders' => $folders, 'files' => $files]);
         } catch (\Exception $e) {
             $this->logger->error('Error fetching folder structure', ['exception' => $e->getMessage()]);
             return new DataResponse(['error' => $e->getMessage()], 400);
         }
     }
- 
-    
-    
 
     /**
      * Save the XML file to the selected Nextcloud folder.
@@ -98,6 +99,31 @@ class ApiController extends Controller {
                 'folder' => $folder,
                 'userId' => $this->userId
             ]);
+            return new DataResponse(['error' => $e->getMessage()], 400);
+        }
+    }
+
+    /**
+     * Get content of a file.
+     *
+     * @NoCSRFRequired
+     * @param string $path The path to the file.
+     * @return DataResponse JSON response with the file content.
+     */
+    public function getFileContent(string $path): DataResponse {
+        try {
+            $userFolder = $this->rootFolder->getUserFolder($this->userId);
+            $file = $userFolder->get($path);
+            
+            if (!$file instanceof \OCP\Files\File) {
+                throw new \Exception('Invalid file path: Not a file');
+            }
+    
+            $content = $file->getContent(); // Get file content
+            
+            return new DataResponse(['content' => $content]);
+        } catch (\Exception $e) {
+            $this->logger->error('Error fetching file content', ['exception' => $e->getMessage()]);
             return new DataResponse(['error' => $e->getMessage()], 400);
         }
     }
