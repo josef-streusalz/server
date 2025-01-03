@@ -230,6 +230,64 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+
+    async function fetchFolderMetadata(path) {
+        try {
+            const response = await fetch(`/index.php/apps/metadatagenerator/api/get-metadata?path=${encodeURIComponent(path)}`);
+            const data = await response.json();
+    
+            if (data.error) {
+                console.error('Error fetching metadata:', data.error);
+                return;
+            }
+    
+            displayMetadata(data.metadata);
+        } catch (error) {
+            console.error('Error fetching metadata:', error);
+        }
+    }
+    
+    
+    function displayMetadata(metadata) {
+        const infoPanel = document.getElementById('folder-info-panel');
+        if (!infoPanel) {
+            console.error('Info panel not found!');
+            return;
+        }
+    
+        infoPanel.innerHTML = '<h3>Folder Metadata</h3>';
+        if (metadata && Object.keys(metadata).length > 0) {
+            Object.entries(metadata).forEach(([key, value]) => {
+                const metaItem = document.createElement('p');
+                metaItem.textContent = `${key}: ${value}`;
+                infoPanel.appendChild(metaItem);
+            });
+        } else {
+            infoPanel.innerHTML += '<p>No metadata available.</p>';
+        }
+    }
+    
+    
+    // Example: Call fetchFolderMetadata when the folder is selected
+    document.addEventListener('folderSelected', (event) => {
+        const folderPath = event.detail.path; // Ensure event provides folder path
+        fetchFolderMetadata(folderPath);
+    });
+    
+    document.addEventListener('DOMContentLoaded', () => {
+        // Locate the Nextcloud details panel (adjust selector if necessary)
+        const detailsPanel = document.querySelector('.app-sidebar-content');
+    
+        if (detailsPanel) {
+            // Create a new div for displaying metadata
+            const metadataContainer = document.createElement('div');
+            metadataContainer.id = 'folder-info-panel';
+            metadataContainer.innerHTML = '<h3>Folder Metadata</h3>';
+            detailsPanel.appendChild(metadataContainer);
+        }
+    });
+    
+
     // Event listeners
     document.getElementById('add-field').addEventListener('click', addField);
     document.getElementById('generate').addEventListener('click', generateXML);

@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace OCA\MetadataGenerator\Controller;
@@ -6,26 +7,31 @@ namespace OCA\MetadataGenerator\Controller;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\Files\IRootFolder;
+use OCP\Files\ICustomMetadata;
+use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\IRequest;
 use Psr\Log\LoggerInterface;
-use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
+
 
 class ApiController extends Controller {
     private $rootFolder;
     private $userId;
     private $logger;
+    private $customMetadata;
 
     public function __construct(
         string $appName,
         IRequest $request,
         IRootFolder $rootFolder,
         ?string $userId,
-        LoggerInterface $logger
+        LoggerInterface $logger,
+        ICustomMetadata $customMetadata
     ) {
         parent::__construct($appName, $request);
         $this->rootFolder = $rootFolder;
         $this->userId = $userId;
         $this->logger = $logger;
+        $this->customMetadata = $customMetadata;
     }
 
     /**
@@ -127,4 +133,57 @@ class ApiController extends Controller {
             return new DataResponse(['error' => $e->getMessage()], 400);
         }
     }
+
+    
+    /**
+     * Get folder structure. Add metadata to a folder.
+     *
+     * @param string $path Folder path
+     * @param string $key Metadata key
+     * @param string $value Metadata value
+     * @return DataResponse
+     */
+    public function addMetadata(string $path, string $key, string $value): DataResponse {
+        try {
+            $userFolder = $this->rootFolder->getUserFolder($this->userId);
+            $targetFolder = $userFolder->get($path);
+
+            if (!$targetFolder instanceof \OCP\Files\Folder) {
+                throw new \Exception('Invalid folder path: Not a folder');
+            }
+
+            $this->customMetadata->set($targetFolder->getId(), $key, $value);
+
+            return new DataResponse(['message' => 'Metadata added successfully']);
+        } catch (\Exception $e) {
+            $this->logger->error('Error adding metadata', ['exception' => $e->getMessage()]);
+            return new DataResponse(['error' => $e->getMessage()], 400);
+        }
+    }
+
+    /**
+     * Retrieve metadata for a folder.
+     *
+     * @param string $path Folder path
+     * @return DataResponse
+     */
+    public function getMetadata(string $path): DataResponse {
+        try {
+            $userFolder = $this->rootFolder->getUserFolder($this->userId);
+            $targetFolder = $userFolder->get($path);
+
+            if (!$targetFolder instanceof \OCP\Files\Folder) {
+                throw new \Exception('Invalid folder path: Not a folder');
+            }
+
+            $metadata = $this->customMetadata->getAll($targetFolder->getId());
+
+            return new DataResponse(['metadata' => $metadata]);
+        } catch (\Exception $e) {
+            $this->logger->error('Error retrieving metadata', ['exception' => $e->getMessage()]);
+            return new DataResponse(['error' => $e->getMessage()], 400);
+        }
+    }
+
+    
 }

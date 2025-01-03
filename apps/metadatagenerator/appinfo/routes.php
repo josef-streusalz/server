@@ -22,5 +22,15 @@ return [
             'url' => '/api/folder-structure',
             'verb' => 'GET',
         ],
+        [
+            'name' => 'api#addMetadata',
+            'url' => '/api/add-metadata',
+            'verb' => 'POST',
+        ],
+        [
+            'name' => 'api#getMetadata',
+            'url' => '/api/get-metadata',
+            'verb' => 'GET',
+        ],
     ],
 ];
