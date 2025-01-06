@@ -29,8 +29,6 @@ class Application extends App implements IBootstrap {
         });
     }
 
-
-
     /**
      * Perform actions during the app boot process.
      */

@@ -184,6 +184,4 @@ class ApiController extends Controller {
             return new DataResponse(['error' => $e->getMessage()], 400);
         }
     }
-
-    
 }
