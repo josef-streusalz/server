@@ -164,15 +164,19 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Back button functionality
     backButton.addEventListener('click', () => {
         if (folderHistory.length > 0) {
-            const previousPath = folderHistory.pop();  // Get the last folder in the history
-            loadFolderStructure(previousPath);  // Navigate back to the previous folder
+            const previousPath = folderHistory.pop();  // Get the last folder in history
+            loadFolderStructure(previousPath);  // Navigate back
+    
+            // ✅ Ensure "Current Folder" path updates when going back
+            selectedFolder = previousPath;
+            currentFolderPath.textContent = `Current Folder: ${selectedFolder}`;
         } else {
             alert('You are already at the root folder.');
         }
     });
+    
 
     // Open the folder browser modal
     function openFolderBrowser() {
@@ -201,9 +205,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             // Sanitize the path to ensure no redundancy (remove '/admin/files/' if it already exists)
-            let sanitizedPath = selectedFolder;
-            if (sanitizedPath.startsWith('/admin/files/')) {
-                sanitizedPath = sanitizedPath.substring('/admin/files/'.length); // Remove '/admin/files/' from the start of the path
+            let sanitizedPath = selectedFolder.replace(/^\/admin\/files\//, ''); // Remove '/admin/files/' if present
+            if (!sanitizedPath) {
+                alert('No folder selected.');
+                return;
             }
 
             const response = await fetch('/index.php/apps/metadatagenerator/api/save', {
